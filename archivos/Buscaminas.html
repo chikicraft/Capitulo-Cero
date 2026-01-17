@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buscaminas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e1e;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+    }
+
+    h1 { margin-bottom: 10px; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+      justify-content: center;
+    }
+
+    .controls label {
+      font-size: 14px;
+    }
+
+    button {
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    .board {
+      display: grid;
+      gap: 2px;
+      touch-action: manipulation;
+    }
+
+    .cell {
+      width: 32px;
+      height: 32px;
+      background: #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .cell.revealed {
+      background: #aaa;
+      cursor: default;
+    }
+
+    .cell.mine {
+      background: crimson;
+    }
+
+    .cell.flag {
+      background: orange;
+    }
+
+    .message {
+      margin: 10px 0;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .message.win {
+      background: #2ecc71;
+      color: #000;
+    }
+
+    .message.lose {
+      background: #e74c3c;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      .cell {
+        width: 26px;
+        height: 26px;
+        font-size: 14px;
+              }
+      }
+      checkWin();
+    }
+
+  </style>
+</head>
+<body>
+  <h1>Buscaminas</h1>
+  <div id="status">
+    ⏱ Tiempo: <span id="time">0</span>s |
+    🚩 Minas: <span id="flags">0</span>
+  </div>
+
+  <div id="message" class="message hidden"></div>
+  <button onclick="startGame()">🔄 Reiniciar</button>
+
+  <div class="controls">
+    <button onclick="preset('easy')">Fácil</button>
+    <button onclick="preset('medium')">Medio</button>
+    <button onclick="preset('hard')">Difícil</button>
+    <label>
+      Filas:
+      <input type="number" id="rows" value="10" min="5" max="30" />
+    </label>
+    <label>
+      Columnas:
+      <input type="number" id="cols" value="10" min="5" max="30" />
+    </label>
+    <label>
+      Minas:
+      <input type="number" id="mines" value="10" min="1" />
+    </label>
+    <button onclick="startGame()">Iniciar</button>
+  </div>
+
+  <div id="board" class="board"></div>
+
+  <script>
+    let rows, cols, mineCount;
+    let flagsUsed = 0;
+    let timer = 0;
+    let interval = null;
+    let gameOver = false;
+    let board = [];
+    let revealed = [];
+
+    function preset(level) {
+      if (level === 'easy') {
+        rows = cols = 9; mineCount = 10;
+      } else if (level === 'medium') {
+        rows = cols = 16; mineCount = 40;
+      } else {
+        rows = 16; cols = 30; mineCount = 99;
+      }
+      document.getElementById('rows').value = rows;
+      document.getElementById('cols').value = cols;
+      document.getElementById('mines').value = mineCount;
+      startGame();
+    }
+
+    function startGame() {
+      clearInterval(interval);
+      gameOver = false;
+      const msg = document.getElementById('message');
+      msg.classList.add('hidden');
+      msg.textContent = '';
+      timer = 0;
+      flagsUsed = 0;
+      document.getElementById('time').textContent = timer;
+      document.getElementById('flags').textContent = flagsUsed;
+      interval = setInterval(() => {
+        timer++;
+        document.getElementById('time').textContent = timer;
+      }, 1000);
+      clearInterval(interval);
+      timer = 0;
+      flagsUsed = 0;
+      document.getElementById('time').textContent = timer;
+      document.getElementById('flags').textContent = flagsUsed;
+      interval = setInterval(() => {
+        timer++;
+        document.getElementById('time').textContent = timer;
+      }, 1000);
+      rows = +document.getElementById('rows').value;
+      cols = +document.getElementById('cols').value;
+      mineCount = +document.getElementById('mines').value;
+
+      board = Array.from({ length: rows }, () => Array(cols).fill(0));
+      revealed = Array.from({ length: rows }, () => Array(cols).fill(false));
+
+      placeMines();
+      calculateNumbers();
+      drawBoard();
+    }
+
+    function placeMines() {
+      let placed = 0;
+      while (placed < mineCount) {
+        let r = Math.floor(Math.random() * rows);
+        let c = Math.floor(Math.random() * cols);
+        if (board[r][c] !== 'M') {
+          board[r][c] = 'M';
+          placed++;
+        }
+      }
+    }
+
+    function calculateNumbers() {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (board[r][c] === 'M') continue;
+          let count = 0;
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              let nr = r + dr, nc = c + dc;
+              if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                if (board[nr][nc] === 'M') count++;
+              }
+            }
+          }
+          board[r][c] = count;
+        }
+      }
+    }
+
+    function drawBoard() {
+      const boardDiv = document.getElementById('board');
+      boardDiv.innerHTML = '';
+      boardDiv.style.gridTemplateColumns = `repeat(${cols}, auto)`;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+
+          let pressTimer;
+
+          cell.onclick = () => {
+            if (!cell.classList.contains('long-press')) {
+              reveal(r, c, cell);
+            }
+            cell.classList.remove('long-press');
+          };
+
+          cell.addEventListener('touchstart', () => {
+            pressTimer = setTimeout(() => {
+              cell.classList.add('long-press');
+              toggleFlag(cell);
+            }, 500);
+          });
+
+          cell.addEventListener('touchend', () => {
+            clearTimeout(pressTimer);
+          });
+          cell.oncontextmenu = (e) => {
+            e.preventDefault();
+            toggleFlag(cell);
+          };
+
+          boardDiv.appendChild(cell);
+        }
+      }
+    }
+
+    function showMessage(text, type) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = `message ${type}`;
+      msg.classList.remove('hidden');
+    }
+
+    function checkWin() {
+      if (gameOver) return;
+      let safeCells = rows * cols - mineCount;
+      let revealedCount = 0;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (revealed[r][c]) revealedCount++;
+        }
+      }
+      if (revealedCount === safeCells) {
+        gameOver = true;
+        clearInterval(interval);
+        showMessage('🎉 ¡Ganaste! Tiempo: ' + timer + 's', 'win');
+      }
+    }
+
+    function reveal(r, c, cell) {
+      if (gameOver || revealed[r][c] || cell.classList.contains('flag')) return;
+
+      revealed[r][c] = true;
+      cell.classList.add('revealed');
+
+      if (board[r][c] === 'M') {
+        gameOver = true;
+        cell.classList.add('mine');
+        cell.textContent = '💣';
+        clearInterval(interval);
+        showMessage('💥 Has perdido. Intenta otra vez', 'lose');
+        return;
+      }
+
+      if (board[r][c] > 0) {
+        cell.textContent = board[r][c];
+      } else {
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            let nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+              const index = nr * cols + nc;
+              const nextCell = document.getElementById('board').children[index];
+              reveal(nr, nc, nextCell);
+            }
+          }
+        }
+      }
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
