@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Capítulo Cero</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #f5f3ef 0%, #e8e4dc 100%);
+      color: #1e1e1e;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ===== ENTRADA ===== */
+    .entrada {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .entrada::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(194, 163, 107, 0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    .entrada::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(138, 109, 59, 0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: float 15s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0); }
+      50% { transform: translateY(-30px) translateX(30px); }
+    }
+
+    .entrada-contenido {
+      max-width: 700px;
+      position: relative;
+      z-index: 1;
+      animation: fadeIn 1.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .entrada h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(36px, 6vw, 56px);
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: #2c2416;
+      letter-spacing: -0.5px;
+    }
+
+    .entrada p {
+      font-size: clamp(16px, 2.5vw, 18px);
+      line-height: 1.8;
+      color: #5a5247;
+      margin-bottom: 48px;
+      font-weight: 300;
+    }
+
+    .entrada a {
+      display: inline-block;
+      padding: 14px 36px;
+      background: #8a6d3b;
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(138, 109, 59, 0.2);
+    }
+
+    .entrada a:hover {
+      background: #72592f;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(138, 109, 59, 0.3);
+    }
+
+    /* ===== HEADER SECCIÓN ===== */
+    .seccion-header {
+      text-align: center;
+      padding: 80px 20px 40px;
+      max-width: 900px;
+      margin: 0 auto;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 0.3s forwards;
+    }
+
+    .seccion-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 4vw, 38px);
+      font-weight: 600;
+      color: #2c2416;
+      margin-bottom: 12px;
+    }
+
+    .seccion-header .divider {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #c2a36b, transparent);
+      margin: 20px auto;
+    }
+
+    /* ===== FILTROS DE CATEGORÍA ===== */
+    .filtros {
+      max-width: 900px;
+      margin: 0 auto 30px;
+      padding: 0 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 0.4s forwards;
+    }
+
+    .filtro-btn {
+      padding: 10px 24px;
+      background: #ffffff;
+      border: 2px solid rgba(194, 163, 107, 0.3);
+      color: #5a5247;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 25px;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    .filtro-btn:hover {
+      border-color: #c2a36b;
+      background: rgba(194, 163, 107, 0.05);
+    }
+
+    .filtro-btn.activo {
+      background: #8a6d3b;
+      color: #fff;
+      border-color: #8a6d3b;
+    }
+
+    /* ===== BÚSQUEDA ===== */
+    .busqueda-container {
+      max-width: 900px;
+      margin: 0 auto 40px;
+      padding: 0 20px;
+      position: relative;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 0.5s forwards;
+    }
+
+    #busqueda {
+      width: 100%;
+      padding: 16px 50px 16px 20px;
+      font-size: 15px;
+      border: 2px solid rgba(194, 163, 107, 0.2);
+      border-radius: 8px;
+      background: #ffffff;
+      color: #2c2416;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    }
+
+    #busqueda:focus {
+      outline: none;
+      border-color: #c2a36b;
+      box-shadow: 0 4px 20px rgba(194, 163, 107, 0.15);
+    }
+
+    #busqueda::placeholder {
+      color: #a08c6d;
+    }
+
+    .busqueda-icono {
+      position: absolute;
+      right: 36px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* ===== COLECCIÓN ===== */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+
+    .grid-proyectos {
+      display: grid;
+      gap: 28px;
+    }
+
+    .proyecto {
+      background: #ffffff;
+      padding: 36px;
+      border-radius: 2px;
+      border-left: 5px solid #c2a36b;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: slideUp 0.6s ease-out forwards;
+    }
+
+    .proyecto:nth-child(1) { animation-delay: 0.7s; }
+    .proyecto:nth-child(2) { animation-delay: 0.85s; }
+    .proyecto:nth-child(3) { animation-delay: 1s; }
+    .proyecto:nth-child(4) { animation-delay: 1.15s; }
+    .proyecto:nth-child(5) { animation-delay: 1.3s; }
+    .proyecto:nth-child(6) { animation-delay: 1.45s; }
+
+    @keyframes slideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .proyecto::before {
+      content: attr(data-icono);
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 80px;
+      opacity: 0.06;
+      line-height: 1;
+    }
+
+    .proyecto:hover {
+      transform: translateX(8px);
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+      border-left-color: #8a6d3b;
+    }
+
+    /* Colores de borde según categoría */
+    .proyecto[data-categoria="poema"] {
+      border-left-color: #c2a36b;
+    }
+
+    .proyecto[data-categoria="flores"] {
+      border-left-color: #d4a5a5;
+    }
+
+    .proyecto[data-categoria="juego"] {
+      border-left-color: #9bb5a3;
+    }
+
+    .proyecto[data-categoria="otro"] {
+      border-left-color: #a5b4c4;
+    }
+
+    .proyecto-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .proyecto-header h2 {
+      margin: 0;
+      flex: 1;
+      min-width: 200px;
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      color: #2c2416;
+    }
+
+    .fecha {
+      font-size: 13px;
+      color: #a08c6d;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      padding-top: 4px;
+    }
+
+    .categoria-tag {
+      display: inline-block;
+      padding: 4px 12px;
+      background: rgba(138, 109, 59, 0.1);
+      color: #8a6d3b;
+      font-size: 12px;
+      border-radius: 12px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .proyecto[data-categoria="flores"] .categoria-tag {
+      background: rgba(212, 165, 165, 0.15);
+      color: #b67676;
+    }
+
+    .proyecto[data-categoria="juego"] .categoria-tag {
+      background: rgba(155, 181, 163, 0.15);
+      color: #5a8a6e;
+    }
+
+    .proyecto[data-categoria="otro"] .categoria-tag {
+      background: rgba(165, 180, 196, 0.15);
+      color: #5a7a94;
+    }
+
+    .proyecto p {
+      margin: 0 0 20px;
+      color: #6b6256;
+      font-size: 15px;
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    .proyecto a {
+      text-decoration: none;
+      color: #8a6d3b;
+      font-weight: 500;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: gap 0.3s ease;
+    }
+
+    .proyecto a:hover {
+      gap: 12px;
+      color: #72592f;
+    }
+
+    .proyecto a::after {
+      content: '→';
+      font-size: 16px;
+    }
+
+    .no-resultados {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8a7f72;
+      font-style: italic;
+    }
+
+    .no-resultados p {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .proyecto.oculto {
+      display: none;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      text-align: center;
+      padding: 60px 20px;
+      font-size: 13px;
+      color: #8a7f72;
+      border-top: 1px solid rgba(138, 109, 59, 0.15);
+      background: rgba(255, 255, 255, 0.3);
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 1.5s forwards;
+    }
+
+    footer p {
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+
+    /* ===== SCROLL SUAVE ===== */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* ===== RESPONSIVO ===== */
+    @media (max-width: 768px) {
+      .entrada {
+        min-height: 90vh;
+      }
+
+      .filtros {
+        gap: 8px;
+      }
+
+      .filtro-btn {
+        padding: 8px 18px;
+        font-size: 13px;
+      }
+
+      .proyecto {
+        padding: 28px;
+      }
+
+      .proyecto::before {
+        font-size: 60px;
+        right: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ENTRADA -->
+  <section class="entrada">
+    <div class="entrada-contenido">
+      <h1>Capítulo Cero</h1>
+      <p>
+        Un espacio donde germinan experimentos creativos. Cada proyecto
+        es una semilla plantada con cuidado y paciencia.
+      </p>
+      <a href="#coleccion">Explorar el Proyectos</a>
+    </div>
+  </section>
+
+  <!-- COLECCIÓN -->
+  <div class="seccion-header" id="coleccion">
+    <h2>Proyectos</h2>
+    <div class="divider"></div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros">
+    <button class="filtro-btn activo" data-filtro="todos">Todos</button>
+    <button class="filtro-btn" data-filtro="poema">📝 Poemas</button>
+    <!--<button class="filtro-btn" data-filtro="flores">🌸 Flores</button>-->
+    <button class="filtro-btn" data-filtro="juego">🎮 Juegos</button>
+    <button class="filtro-btn" data-filtro="otro">✨ Otros</button>
+  </div>
+
+  <!-- BÚSQUEDA -->
+  <div class="busqueda-container">
+    <input 
+      type="text" 
+      id="busqueda" 
+      placeholder="Buscar por título, descripción o fecha..."
+      autocomplete="off"
+    >
+    <div class="busqueda-icono">🔍</div>
+  </div>
+
+  <main>
+    <div class="grid-proyectos" id="grid-proyectos">
+      <!-- POEMA 1 -->
+      <div class="proyecto" 
+           data-categoria="poema" 
+           data-icono="📖"
+           data-titulo="Luna de cristal" 
+           data-descripcion="fragilidad confianza luz nocturna" 
+           data-fecha="2026-01-7">
+        <span class="categoria-tag">Poema</span>
+        <div class="proyecto-header">
+          <h2>Luna de cristal</h2>
+          <span class="fecha">7 Ene 2026</span>
+        </div>
+        <p>Un poema sobre la fragilidad y la confianza, donde la luz nocturna revela verdades delicadas.</p>
+        <a href="archivos/Luna_De_Cristal.html">Leer poema</a>
+      </div>
+
+      <!-- POEMA 2 -->
+      <div class="proyecto" 
+           data-categoria="poema" 
+           data-icono="✉️"
+           data-titulo="Carta al cielo" 
+           data-descripcion="cielo responder conversación infinito" 
+           data-fecha="2025-12-28">
+        <span class="categoria-tag">Poema</span>
+        <div class="proyecto-header">
+          <h2>Carta al cielo</h2>
+          <span class="fecha">28 Dic 2025</span>
+        </div>
+        <p>Versos escritos como si el cielo pudiera responder, una conversación íntima con lo infinito.</p>
+        <a href="archivos/b.html">Leer poema</a>
+      </div>
+
+      <!-- PROYECTO FLORES 
+      <div class="proyecto" 
+           data-categoria="flores" 
+           data-icono="🌺"
+           data-titulo="Jardín de rosas" 
+           data-descripcion="diseño flores rosas jardín colores" 
+           data-fecha="2024-01-20">
+        <span class="categoria-tag">Flores</span>
+        <div class="proyecto-header">
+          <h2>Jardín de rosas</h2>
+          <span class="fecha">20 Ene 2024</span>
+        </div>
+        <p>Un estudio visual sobre las rosas y sus distintas variedades, explorando formas y colores.</p>
+        <a href="proyectos/flores/jardin-rosas.html">Ver proyecto</a>
+      </div>-->
+
+      <!-- PROYECTO JUEGO -->
+      <div class="proyecto" 
+           data-categoria="juego" 
+           data-icono="🎲"
+           data-titulo="RPG" 
+           data-descripcion="juego RPG" 
+           data-fecha="2025-11-15">
+        <span class="categoria-tag">Juego</span>
+        <div class="proyecto-header">
+          <h2>RPG</h2>
+          <span class="fecha">15 Nov 2025</span>
+        </div>
+        <p>Un juego de explora y descubre historias ocultas.</p>
+        <a href="archivos/RPG.html">Jugar ahora</a>
+      </div>
+    </div>
+
+    <div class="no-resultados" id="no-resultados" style="display: none;">
+      <p>No se encontraron proyectos que coincidan con tu búsqueda</p>
+    </div>
+  </main>
+
+  <footer>
+    <p>© Capitulo Cero · Espacio creativo personal de Chiki</p>
+  </footer>
+
+  <script>
+    // Sistema de búsqueda y filtros
+    const busqueda = document.getElementById('busqueda');
+    const gridProyectos = document.getElementById('grid-proyectos');
+    const noResultados = document.getElementById('no-resultados');
+    const proyectos = gridProyectos.querySelectorAll('.proyecto');
+    const filtrosBtns = document.querySelectorAll('.filtro-btn');
+    
+    let filtroActivo = 'todos';
+
+    // Filtros por categoría
+    filtrosBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        // Actualizar botones activos
+        filtrosBtns.forEach(b => b.classList.remove('activo'));
+        this.classList.add('activo');
+        
+        filtroActivo = this.getAttribute('data-filtro');
+        aplicarFiltros();
+      });
+    });
+
+    // Sistema de búsqueda
+    busqueda.addEventListener('input', function(e) {
+      aplicarFiltros();
+    });
+
+    function aplicarFiltros() {
+      const termino = busqueda.value.toLowerCase().trim();
+      let hayResultados = false;
+
+      proyectos.forEach(proyecto => {
+        const categoria = proyecto.getAttribute('data-categoria');
+        const titulo = proyecto.getAttribute('data-titulo').toLowerCase();
+        const descripcion = proyecto.getAttribute('data-descripcion').toLowerCase();
+        const fecha = proyecto.getAttribute('data-fecha');
+        
+        // Formatear fecha para búsqueda
+        const fechaFormateada = new Date(fecha).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }).toLowerCase();
+
+        // Verificar filtro de categoría
+        const pasaFiltro = filtroActivo === 'todos' || categoria === filtroActivo;
+
+        // Verificar búsqueda
+        const pasaBusqueda = termino === '' || 
+                            titulo.includes(termino) || 
+                            descripcion.includes(termino) || 
+                            fechaFormateada.includes(termino) ||
+                            fecha.includes(termino);
+
+        if (pasaFiltro && pasaBusqueda) {
+          proyecto.classList.remove('oculto');
+          hayResultados = true;
+        } else {
+          proyecto.classList.add('oculto');
+        }
+      });
+
+      // Mostrar/ocultar mensaje de no resultados
+      if (termino === '' && filtroActivo === 'todos') {
+        noResultados.style.display = 'none';
+      } else {
+        noResultados.style.display = hayResultados ? 'none' : 'block';
+      }
+    }
+
+    // Animación suave al hacer scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    proyectos.forEach(proyecto => {
+      observer.observe(proyecto);
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RPG simple (Vanilla) - Parte 5: Combate por turnos</title>
+  <style>
+    /* =========================
+       Variables y estilos base
+       ========================= */
+    :root{
+      --tile-size: 32px;
+      --cols: 20;
+      --rows: 15;
+      --canvas-width: calc(var(--tile-size) * var(--cols));
+      --canvas-height: calc(var(--tile-size) * var(--rows));
+      --panel-bg: rgba(255,255,255,0.03);
+      --muted: #9aa6b2;
+      --accent: #ffcc33;
+    }
+    *{box-sizing:border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071018 0%, #0b1220 100%);color:#e6eef6}
+    .app { min-height:100vh; display:grid; grid-template-columns:1fr 320px; grid-template-rows:auto 140px; gap:16px; padding:16px; }
+
+    /* Game area */
+    .game-area { background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border-radius:8px; padding:12px; display:flex; gap:12px; align-items:flex-start; box-shadow:0 4px 18px rgba(0,0,0,0.6); }
+    .canvas-box{ background:var(--panel-bg); padding:8px; border-radius:6px; display:flex; flex-direction:column; gap:8px; }
+    #gameCanvas{ width:var(--canvas-width); height:var(--canvas-height); border-radius:4px; border:3px solid rgba(255,255,255,0.04); background:#0000; image-rendering:pixelated; display:block; }
+
+    /* Legend */
+    .legend{ display:flex; flex-direction:column; gap:6px; padding:6px; min-width:140px; background:var(--panel-bg); border-radius:6px;}
+    .legend h4{ margin:0 0 4px 0; color:var(--muted); font-size:13px;}
+    .tile-row{ display:flex; gap:8px; align-items:center; font-size:18px; color:#e9f2fb;}
+    .swatch{ width:28px; height:28px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; font-size:16px; box-shadow: inset 0 -2px 0 rgba(0,0,0,0.2);}
+    .swatch.grass{ background:#6ac36a; } .swatch.tree{ background:#2c6b35 } .swatch.potion{ background:#a84de8 } .swatch.stairs{ background:#ffd27f } .swatch.rock{ background:#7a8189 }
+
+    /* Sidebar */
+    .sidebar{ background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:8px; padding:12px; height:calc(var(--canvas-height) + 24px); box-shadow:0 4px 18px rgba(0,0,0,0.6); display:flex; flex-direction:column; gap:10px; }
+    .panel{ background:rgba(0,0,0,0.18); padding:8px; border-radius:6px;}
+    .player-stats h3{ margin:0 0 6px 0; font-size:15px; color:var(--accent);}
+    .stat-row{ display:flex; justify-content:space-between; gap:8px; font-size:13px; color:#dbe9f6; margin:4px 0; }
+    .inventory h4{ margin:0 0 6px 0; color:var(--muted); font-size:13px; }
+    .inventory-list{ display:flex; flex-direction:column; gap:6px; font-size:14px; }
+    .inv-item{ display:flex; justify-content:space-between; gap:8px; align-items:center; padding:6px; border-radius:6px; background:rgba(255,255,255,0.02);}
+    .inv-item .name{ font-weight:600; color:#f3fafc }
+    .inv-item .qty{ color:var(--muted); font-size:13px }
+
+    button{ background:linear-gradient(180deg,#1d70ff,#1460df); color:white; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; font-weight:600; }
+    button.secondary{ background:linear-gradient(180deg,#2b3038,#1b2026); box-shadow:none; color:#d6dde6; }
+
+    /* Log */
+    .log { grid-column:1 / span 2; grid-row:2; display:flex; gap:12px; }
+    .log-box{ flex:1; padding:10px; background:rgba(0,0,0,0.18); border-radius:8px; min-height:120px; max-height:200px; overflow:auto; color:#d8eaf8; font-size:13px; }
+    .log-box p { margin:6px 0; line-height:1.2; }
+
+    /* Combat overlay */
+    #combatOverlay{
+      position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:520px; max-width:90%; background:rgba(10,12,16,0.98); border-radius:10px; padding:14px; box-shadow:0 8px 40px rgba(0,0,0,0.7); display:none; z-index:40; color:#e6eef6;
+    }
+    #combatOverlay h3{ margin:0 0 8px 0; color:var(--accent); }
+    .combat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:8px; }
+    .combat-box{ background:rgba(255,255,255,0.02); padding:8px; border-radius:6px; min-height:64px; }
+    .combat-log{ background:rgba(0,0,0,0.12); padding:8px; border-radius:6px; max-height:120px; overflow:auto; font-size:13px; margin-bottom:8px;}
+    .combat-actions{ display:flex; gap:8px; justify-content:flex-end; }
+    .combat-actions button{ padding:8px 12px; font-weight:700; }
+
+    /* Game over overlay */
+    #gameOverOverlay{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:rgba(12,6,6,0.95); color:#ffd6d6; padding:20px; border-radius:10px; display:none; z-index:50; text-align:center; }
+
+    @media (max-width:900px){
+      .app{ grid-template-columns:1fr; grid-template-rows:auto auto auto; }
+      .sidebar{ height:auto; order:3; }
+      .game-area{ order:1; }
+      .log{ order:2; }
+      #gameCanvas{ transform:scale(0.9); transform-origin:top left; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Left: canvas + legend -->
+    <div class="game-area">
+      <div class="canvas-box panel">
+        <canvas id="gameCanvas" width="640" height="480" aria-label="Mapa del juego"></canvas>
+        <div style="font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;">
+          <div>Movimiento: <strong>Flechas</strong></div>
+          <div>Interacción: <strong>Enter / Espacio</strong></div>
+          <div>Combate: <strong>A</strong> Atacar • <strong>I</strong> Usar item • <strong>H</strong> Huir</div>
+        </div>
+      </div>
+
+      <div class="legend panel">
+        <h4>Leyenda</h4>
+        <div class="tile-row"><div class="swatch grass"></div><div>Hierba</div></div>
+        <div class="tile-row"><div class="swatch tree">🌲</div><div>Árbol (obstáculo)</div></div>
+        <div class="tile-row"><div class="swatch potion">💜</div><div>Poción</div></div>
+        <div class="tile-row"><div class="swatch rock">🪨</div><div>Roca (obstáculo)</div></div>
+        <div class="tile-row"><div class="swatch stairs">⬆️</div><div>Escalera</div></div>
+        <div class="tile-row"><div class="swatch grass">👹</div><div>Enemigo</div></div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="panel player-stats">
+        <h3>Jugador</h3>
+        <div class="stat-row"><div>Nombre</div><div id="playerName">Hero</div></div>
+        <div class="stat-row"><div>HP</div><div id="playerHP">— / —</div></div>
+        <div class="stat-row"><div>Nivel</div><div id="playerLevel">—</div></div>
+        <div class="stat-row"><div>EXP</div><div id="playerExp">—</div></div>
+        <div class="stat-row"><div>Ataque</div><div id="playerAtk">—</div></div>
+        <div class="stat-row"><div>Defensa</div><div id="playerDef">—</div></div>
+      </div>
+
+      <div class="panel inventory">
+        <h4>Inventario</h4>
+        <div class="inventory-list" id="inventoryList"></div>
+        <div style="margin-top:8px;display:flex;gap:8px;">
+          <button id="usePotionBtn" class="secondary" disabled>Usar poción (P)</button>
+          <button id="centerBtn">Centrar</button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:auto">
+        <h4 style="margin:0 0 6px 0;color:var(--muted)">Indicadores</h4>
+        <div style="font-size:13px;color:#cfe9fb">Nivel actual: <strong id="currentLevelLabel">Superficie (0)</strong></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px">Presiona Enter/Space sobre la escalera para cambiar de nivel.</div>
+      </div>
+    </aside>
+
+    <!-- Log -->
+    <div class="log">
+      <div class="log-box panel" id="messageLog" aria-live="polite">
+        <p><strong>Bienvenido</strong> — muévete con flechas. Entra a un enemigo para combatir.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Combat overlay -->
+  <div id="combatOverlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <h3>Combate</h3>
+    <div class="combat-grid">
+      <div class="combat-box" id="combatPlayerBox">
+        <strong>Jugador</strong>
+        <div id="c_player_hp">HP: — / —</div>
+        <div id="c_player_stats">Atq: — Def: —</div>
+      </div>
+      <div class="combat-box" id="combatEnemyBox">
+        <strong id="c_enemy_name">Enemigo</strong>
+        <div id="c_enemy_hp">HP: — / —</div>
+        <div id="c_enemy_stats">Atq: — Def: —</div>
+      </div>
+    </div>
+
+    <div class="combat-log" id="combatLog"></div>
+
+    <div class="combat-actions">
+      <button id="attackBtn">Atacar (A)</button>
+      <button id="itemBtn">Usar ítem (I)</button>
+      <button id="fleeBtn">Huir (H)</button>
+    </div>
+  </div>
+
+  <!-- Game over overlay -->
+  <div id="gameOverOverlay">
+    <h2>Game Over</h2>
+    <p id="gameOverMsg">Has sido derrotado...</p>
+    <div style="margin-top:12px;">
+      <button id="restartBtn">Reiniciar</button>
+    </div>
+  </div>
+
+  <!-- =========================
+       JavaScript: mapas, render, movimiento, inventario, combate
+       ========================= -->
+  <script>
+    /* -------------------------
+       Constantes y utilidades
+       ------------------------- */
+    const COLS = 20;
+    const ROWS = 15;
+    const TILE = {
+      EMPTY: 0,
+      TREE: 1,
+      POTION: 2,
+      STAIRS: 3,
+      ROCK: 4,
+      ENEMY: 5,
+      GOLD: 6,
+      SWORD: 7
+    };
+    const TILE_SIZE = 32;
+
+    // Item definitions
+    const ITEM_DEFS = {
+      potion: {
+        id: 'potion',
+        name: 'Poción de vida',
+        desc: 'Restaura 10 HP al usar.',
+        type: 'consumable',
+        use(usr){
+          if(usr.hp >= usr.maxHp) return {ok:false, msg:'Tu HP ya está al máximo.'};
+          const heal = Math.min(10, usr.maxHp - usr.hp);
+          usr.hp += heal;
+          return {ok:true, msg:`Recuperaste ${heal} HP.`};
+        }
+      },
+      sword: {
+        id: 'sword',
+        name: 'Espada',
+        desc: 'Incrementa ataque permanente +3 al equipar.',
+        type: 'equipment',
+        use(usr){
+          if(usr._swordEquipped) return {ok:false, msg:'Ya tienes equipada una espada.'};
+          usr._swordEquipped = true;
+          usr.baseAttack += 3;
+          usr.attack = usr.baseAttack;
+          return {ok:true, msg:'Has equipado una espada. Ataque aumentado +3.'};
+        }
+      },
+      gold: {
+        id: 'gold',
+        name: 'Oro',
+        desc: 'Moneda, no usable.',
+        type: 'currency',
+        use(){ return {ok:false, msg:'No puedes usar oro.'}; }
+      }
+    };
+
+    /* DOM */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const messageLog = document.getElementById('messageLog');
+    const inventoryListEl = document.getElementById('inventoryList');
+    const currentLevelLabel = document.getElementById('currentLevelLabel');
+    const usePotionBtn = document.getElementById('usePotionBtn');
+    const centerBtn = document.getElementById('centerBtn');
+
+    // Combat DOM
+    const combatOverlay = document.getElementById('combatOverlay');
+    const combatLogEl = document.getElementById('combatLog');
+    const attackBtn = document.getElementById('attackBtn');
+    const itemBtn = document.getElementById('itemBtn');
+    const fleeBtn = document.getElementById('fleeBtn');
+    // Combat stats fields
+    const c_player_hp = document.getElementById('c_player_hp');
+    const c_player_stats = document.getElementById('c_player_stats');
+    const c_enemy_name = document.getElementById('c_enemy_name');
+    const c_enemy_hp = document.getElementById('c_enemy_hp');
+    const c_enemy_stats = document.getElementById('c_enemy_stats');
+
+    // Game over overlay
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const gameOverMsg = document.getElementById('gameOverMsg');
+    const restartBtn = document.getElementById('restartBtn');
+
+    /* Canvas scaling for crisp rendering */
+    (function setupCanvasScaling(){
+      const dpr = window.devicePixelRatio || 1;
+      const cssWidth = COLS * TILE_SIZE;
+      const cssHeight = ROWS * TILE_SIZE;
+      canvas.width = Math.round(cssWidth * dpr);
+      canvas.height = Math.round(cssHeight * dpr);
+      canvas.style.width = cssWidth + 'px';
+      canvas.style.height = cssHeight + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+    })();
+
+    /* -------------------------
+       Estado del juego
+       - maps: dos niveles
+       - enemies: array de objetos enemigos con posición y stats
+       ------------------------- */
+    let maps = [];
+    let enemies = []; // list of active enemies across both levels
+
+    let player = null; // se inicializa en initGame()
+
+    // Estado de combate
+    let inCombat = false;
+    let combatEnemy = null;
+    let lastLogTimestamp = 0;
+
+    // Inicialización
+    initGame();
+
+    /* -------------------------
+       Funciones de inicialización / reinicio
+       ------------------------- */
+    function initGame(){
+      // Reset arrays
+      maps = [
+        createEmptyMap(ROWS, COLS, TILE.EMPTY),
+        createEmptyMap(ROWS, COLS, TILE.EMPTY)
+      ];
+      enemies = [];
+
+      // Crear jugador con stats base
+      player = {
+        x: Math.floor(COLS/2),
+        y: Math.floor(ROWS/2),
+        level: 0,
+        hp: 30,
+        maxHp: 30,
+        baseAttack: 6,
+        attack: 6,
+        defense: 2,
+        exp: 0,
+        lvl: 1,
+        inventory: [], // array {id,name,qty}
+        _swordEquipped: false
+      };
+
+      // Generar mapas y enemigos
+      generateSurface(maps[0], 0);
+      generateUnderground(maps[1], 1);
+
+      // Ubicar jugador en celda vacía
+      placePlayerSafe();
+
+      // UI initial
+      logMessage("Juego iniciado. Bienvenido, aventurero.");
+      render();
+    }
+
+    // Reiniciar juego cuando mueras
+    function restartGame(){
+      gameOverOverlay.style.display = 'none';
+      initGame();
+    }
+
+    restartBtn.addEventListener('click', restartGame);
+
+    /* -------------------------
+       Map utilities y generación
+       ------------------------- */
+    function createEmptyMap(rows, cols, fillTile=TILE.EMPTY){
+      const m = new Array(rows);
+      for(let r=0;r<rows;r++){
+        m[r] = new Array(cols).fill(fillTile);
+      }
+      return m;
+    }
+
+    // Genera la superficie y añade enemigos con stats bajos
+    function generateSurface(map, levelIndex=0){
+      // árboles
+      const treeCount = 70;
+      for(let i=0;i<treeCount;i++){
+        const x = randInt(0,COLS-1), y = randInt(0,ROWS-1);
+        if(map[y][x] === TILE.EMPTY) map[y][x] = TILE.TREE;
+      }
+      // pociones
+      for(let i=0;i<6;i++){
+        const x = randInt(0,COLS-1), y = randInt(0,ROWS-1);
+        if(map[y][x] === TILE.EMPTY) map[y][x] = TILE.POTION;
+      }
+      // espadas
+      for(let i=0;i<2;i++){
+        const x = randInt(0,COLS-1), y = randInt(0,ROWS-1);
+        if(map[y][x] === TILE.EMPTY) map[y][x] = TILE.SWORD;
+      }
+      // enemigos débiles
+      for(let i=0;i<7;i++){
+        const pos = placeTileRandom(map, TILE.ENEMY);
+        if(pos) spawnEnemyAt(pos.x, pos.y, levelIndex, 'Goblín');
+      }
+      // escalera
+      placeTileRandom(map, TILE.STAIRS);
+    }
+
+    // Genera subterráneo, enemigos más fuertes y oro/tesoro
+    function generateUnderground(map, levelIndex=1){
+      // rocas
+      for(let i=0;i<90;i++){
+        const x = randInt(0,COLS-1), y = randInt(0,ROWS-1);
+        if(map[y][x] === TILE.EMPTY) map[y][x] = TILE.ROCK;
+      }
+      // enemigos fuertes
+      for(let i=0;i<12;i++){
+        const pos = placeTileRandom(map, TILE.ENEMY);
+        if(pos) spawnEnemyAt(pos.x, pos.y, levelIndex, 'Gólem');
+      }
+      // oro en esquina o aleatorio
+      const tx = COLS-2, ty = ROWS-2;
+      if(map[ty][tx] === TILE.EMPTY) map[ty][tx] = TILE.GOLD;
+      else placeTileRandom(map, TILE.GOLD);
+
+      // escalera
+      placeTileRandom(map, TILE.STAIRS);
+    }
+
+    // Coloca un tile aleatorio libre (evita bordes)
+    function placeTileRandom(map, tileType){
+      for(let attempts=0; attempts<200; attempts++){
+        const x = randInt(1,COLS-2), y = randInt(1,ROWS-2);
+        if(map[y][x] === TILE.EMPTY){
+          map[y][x] = tileType;
+          return {x,y};
+        }
+      }
+      // fallback
+      map[1][1] = tileType;
+      return {x:1,y:1};
+    }
+
+    // Crea un enemigo con stats basados en nivel (0-superficie,1-subterraneo)
+    function spawnEnemyAt(x,y,levelIndex, baseName='Enemigo'){
+      const difficulty = (levelIndex === 0) ? 1 : 2;
+      // Stat scaling simple
+      const maxHp = 8 + difficulty * randInt(2,6);
+      const atk = 3 + difficulty * randInt(1,3);
+      const def = 1 + difficulty * randInt(0,2);
+      const exp = 6 + difficulty * randInt(2,6);
+      const gold = randInt(3, 8) * difficulty;
+      const name = baseName + (difficulty===2 ? ' subterráneo' : '');
+      const enemy = {
+        id: `e_${Date.now()}_${x}_${y}_${Math.random().toString(36).substr(2,4)}`,
+        x,y,
+        level: levelIndex,
+        name,
+        maxHp,
+        hp: maxHp,
+        attack: atk,
+        defense: def,
+        exp,
+        gold
+      };
+      enemies.push(enemy);
+      return enemy;
+    }
+
+    // Buscar enemigo por coordenadas y nivel
+    function findEnemyAt(levelIndex, x,y){
+      return enemies.find(e => e.level === levelIndex && e.x === x && e.y === y);
+    }
+
+    // Eliminar enemigo (victoria)
+    function removeEnemy(enemy){
+      const i = enemies.indexOf(enemy);
+      if(i>=0) enemies.splice(i,1);
+      // limpiar tile en su mapa
+      maps[enemy.level][enemy.y][enemy.x] = TILE.EMPTY;
+    }
+
+    /* -------------------------
+       Render: dibuja el mapa, tiles, enemigos y jugador
+       ------------------------- */
+    function render(){
+      ctx.clearRect(0,0, COLS*TILE_SIZE, ROWS*TILE_SIZE);
+
+      // fondo según nivel
+      if(player.level === 0) ctx.fillStyle = '#72c67f';
+      else ctx.fillStyle = '#4a4f56';
+      ctx.fillRect(0,0, COLS*TILE_SIZE, ROWS*TILE_SIZE);
+
+      const map = maps[player.level];
+      for(let y=0;y<ROWS;y++){
+        for(let x=0;x<COLS;x++){
+          const tile = map[y][x];
+          const px = x * TILE_SIZE, py = y * TILE_SIZE;
+          switch(tile){
+            case TILE.EMPTY:
+              if(player.level===0) ctx.fillStyle = ((x+y)%2===0)?'#6fc26f':'#66bd66';
+              else ctx.fillStyle = ((x+y)%2===0)?'#4a4f56':'#43474d';
+              ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+              break;
+            case TILE.TREE:
+              ctx.fillStyle='#2c6b35'; ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+              ctx.font = `${TILE_SIZE-6}px serif`; ctx.fillText('🌲', px + TILE_SIZE/2, py + TILE_SIZE/2 + 1);
+              break;
+            case TILE.POTION:
+              ctx.fillStyle='#8a47c2'; ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+              ctx.font = `${TILE_SIZE-8}px serif`; ctx.fillText('💜', px + TILE_SIZE/2, py + TILE_SIZE/2 + 1);
+              break;
+            case TILE.SWORD:
+              ctx.fillStyle='#6b5b3a'; ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+              ctx.font = `${TILE_SIZE-8}px serif`; ctx.fillText('🗡️', px + TILE_SIZE/2, py + TILE_SIZE/2 + 1);
+              break;
+            case TILE.STAIRS:
+              ctx.fillStyle='#ffd27f'; ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+              ctx.font = `${TILE_SIZE-8}px serif`; ctx.fillText(player.level===0 ? '⬇️' : '⬆️', px + TILE_SIZE/2, py + TILE_SIZE/2 + 1);
+              break;
+            case TILE.ROCK:
+              ctx.fillStyle='#7a8189'; ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+              ctx.font = `${TILE_SIZE-8}px serif`; ctx.fillText('🪨', px + TILE_SIZE/2, py + TILE_SIZE/2 + 1);
+              break;
+            case TILE.GOLD:
+              ctx.fillStyle='#b78b2f'; ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+              ctx.font = `${TILE_SIZE-8}px serif`; ctx.fillText('💰', px + TILE_SIZE/2, py + TILE_SIZE/2 + 1);
+              break;
+            case TILE.ENEMY:
+              // encontrar enemigo para elegir color o nombre (opcional)
+              const en = findEnemyAt(player.level, x, y);
+              ctx.fillStyle = en ? '#7a2e2e' : '#5a2a2a';
+              ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+              ctx.font = `${TILE_SIZE-6}px serif`; ctx.fillText('👹', px + TILE_SIZE/2, py + TILE_SIZE/2 + 1);
+              break;
+            default:
+              ctx.fillStyle='#ff00ff'; ctx.fillRect(px,py,TILE_SIZE,TILE_SIZE);
+          }
+
+          // borde leve
+          ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1;
+          ctx.strokeRect(px+0.5,py+0.5,TILE_SIZE-1,TILE_SIZE-1);
+        }
+      }
+
+      // Dibujar jugador encima
+      drawPlayer();
+
+      // Actualizar sidebar
+      updateSidebarStats();
+      renderInventoryList();
+    }
+
+    function drawPlayer(){
+      const px = player.x * TILE_SIZE, py = player.y * TILE_SIZE, cx = px + TILE_SIZE/2, cy = py + TILE_SIZE/2;
+      ctx.beginPath(); ctx.fillStyle = '#d33a3a'; ctx.arc(cx,cy,TILE_SIZE*0.36,0,Math.PI*2); ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#2b0505'; ctx.stroke();
+      ctx.font = `${TILE_SIZE-6}px serif`; ctx.fillText('🧑', cx, cy + 1);
+    }
+
+    /* -------------------------
+       Inventario: array con funciones (add/remove/use)
+       ------------------------- */
+    function getInventoryEntry(id){
+      return player.inventory.find(it => it.id === id);
+    }
+    function addItem(id, qty=1){
+      const def = ITEM_DEFS[id];
+      if(!def) return;
+      const ent = getInventoryEntry(id);
+      if(ent) ent.qty += qty;
+      else player.inventory.push({ id: def.id, name: def.name, qty });
+      logMessage(`Obtuviste ${def.name}${qty>1?(' x'+qty):''}.`);
+      render();
+    }
+    function removeItem(id, qty=1){
+      const ent = getInventoryEntry(id);
+      if(!ent) return false;
+      if(ent.qty > qty) ent.qty -= qty;
+      else {
+        const i = player.inventory.indexOf(ent);
+        if(i>=0) player.inventory.splice(i,1);
+      }
+      render();
+      return true;
+    }
+    function useItem(id){
+      const def = ITEM_DEFS[id];
+      if(!def){ logMessage('Item desconocido'); return; }
+      const ent = getInventoryEntry(id);
+      if(!ent || ent.qty <= 0){ logMessage('No tienes ese item.'); return; }
+      const res = def.use(player);
+      if(res.ok){
+        // Si consumible o equipo (en nuestro diseño equipment se consume en uso)
+        if(def.type === 'consumable' || def.type === 'equipment'){
+          removeItem(id, 1);
+        }
+        logMessage(res.msg);
+      } else {
+        logMessage(res.msg);
+      }
+      render();
+    }
+
+    function renderInventoryList(){
+      inventoryListEl.innerHTML = '';
+      const order = ['potion','sword','gold'];
+      const entries = [...player.inventory].sort((a,b)=> order.indexOf(a.id)-order.indexOf(b.id));
+      if(entries.length === 0){
+        const e = document.createElement('div'); e.style.color='var(--muted)'; e.style.fontSize='13px'; e.textContent = 'Inventario vacío';
+        inventoryListEl.appendChild(e); usePotionBtn.disabled = true; return;
+      }
+      for(const it of entries){
+        const row = document.createElement('div'); row.className='inv-item';
+        const left = document.createElement('div'); left.style.display='flex'; left.style.flexDirection='column';
+        const name = document.createElement('div'); name.className='name'; name.textContent=it.name;
+        const desc = document.createElement('div'); desc.style.fontSize='12px'; desc.style.color='var(--muted)'; desc.textContent = ITEM_DEFS[it.id]?.desc || '';
+        left.appendChild(name); left.appendChild(desc);
+        const right = document.createElement('div'); right.style.display='flex'; right.style.gap='8px'; right.style.alignItems='center';
+        const qty = document.createElement('div'); qty.className='qty'; qty.textContent = `x${it.qty}`;
+        const btn = document.createElement('button');
+        if(it.id === 'gold'){ btn.textContent='—'; btn.disabled=true; }
+        else if(it.id === 'potion'){ btn.textContent='Usar'; btn.onclick = ()=> useItem('potion'); }
+        else if(it.id === 'sword'){ btn.textContent='Equipar'; btn.onclick = ()=> useItem('sword'); }
+        else { btn.textContent='Usar'; btn.onclick = ()=> useItem(it.id); }
+        right.appendChild(qty); right.appendChild(btn);
+        row.appendChild(left); row.appendChild(right);
+        inventoryListEl.appendChild(row);
+      }
+      usePotionBtn.disabled = !(getInventoryEntry('potion') && getInventoryEntry('potion').qty > 0);
+    }
+
+    /* -------------------------
+       Movimiento, colisiones e interacción (incluye inicio combate)
+       ------------------------- */
+    const KEY = { ArrowUp:{dx:0,dy:-1}, ArrowDown:{dx:0,dy:1}, ArrowLeft:{dx:-1,dy:0}, ArrowRight:{dx:1,dy:0} };
+
+    document.addEventListener('keydown', (ev) => {
+      // Si estamos en combate, manejar teclas de combate
+      if(inCombat){
+        handleCombatKey(ev);
+        // evitar que flechas muevan la página durante combate
+        if(Object.keys(KEY).includes(ev.key)) ev.preventDefault();
+        return;
+      }
+
+      // Normal gameplay input
+      if(Object.keys(KEY).includes(ev.key)){
+        ev.preventDefault();
+      }
+      if(ev.key in KEY){
+        const {dx,dy} = KEY[ev.key];
+        attemptMove(dx,dy);
+        return;
+      }
+      // Interactuar con escalera
+      if(ev.key === 'Enter' || ev.code === 'Space' || ev.key === ' '){
+        ev.preventDefault();
+        tryChangeLevel();
+        return;
+      }
+      // P usar poción rápido
+      if(ev.key.toLowerCase() === 'p'){
+        useItem('potion');
+        return;
+      }
+      // I abrir inventario (enfocar)
+      if(ev.key.toLowerCase() === 'i'){
+        const btn = inventoryListEl.querySelector('button:not([disabled])');
+        if(btn) btn.focus();
+        logMessage('Inventario enfocado (usa mouse o P para usar poción).');
+        return;
+      }
+    });
+
+    // Intentar mover jugador; si hay enemigo se inicia combate
+    function attemptMove(dx,dy){
+      if(inCombat) return;
+      const nx = player.x + dx, ny = player.y + dy;
+      if(nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS){ logMessage('No puedes moverte fuera del mapa.'); return; }
+      const tile = maps[player.level][ny][nx];
+
+      // Si enemigo: iniciar combate (sin mover)
+      if(tile === TILE.ENEMY){
+        const enemy = findEnemyAt(player.level, nx, ny);
+        if(enemy){
+          startCombat(enemy);
+          return;
+        } else {
+          // si tile es ENEMY pero no hay objeto, limpiar y permitir mover
+          maps[player.level][ny][nx] = TILE.EMPTY;
+        }
+      }
+
+      // Colisiones
+      if((player.level===0 && tile === TILE.TREE) || (player.level===1 && tile===TILE.ROCK)){
+        logMessage('No puedes atravesar ese obstáculo.');
+        return;
+      }
+
+      // Mover
+      player.x = nx; player.y = ny;
+
+      // Interacciones al pisar
+      if(tile === TILE.POTION){
+        addItem('potion',1);
+        maps[player.level][ny][nx] = TILE.EMPTY;
+      } else if(tile === TILE.GOLD){
+        const amount = randInt(5,25);
+        addItem('gold', amount);
+        maps[player.level][ny][nx] = TILE.EMPTY;
+      } else if(tile === TILE.SWORD){
+        addItem('sword',1);
+        maps[player.level][ny][nx] = TILE.EMPTY;
+      }
+      if(tile === TILE.STAIRS){
+        logMessage('Estás sobre una escalera. Presiona Enter o Espacio para cambiar de nivel.');
+      }
+      render();
+    }
+
+    // Cambio de nivel por escalera
+    function tryChangeLevel(){
+      const currentTile = maps[player.level][player.y][player.x];
+      if(currentTile !== TILE.STAIRS){ logMessage('No hay escalera aquí.'); return; }
+      const targetLevel = (player.level === 0) ? 1 : 0;
+      let found = false;
+      for(let y=0;y<ROWS && !found;y++){
+        for(let x=0;x<COLS && !found;x++){
+          if(maps[targetLevel][y][x] === TILE.STAIRS){
+            player.level = targetLevel; player.x = x; player.y = y; found = true;
+          }
+        }
+      }
+      if(!found){
+        outer: for(let y=0;y<ROWS;y++){
+          for(let x=0;x<COLS;x++){
+            if(maps[targetLevel][y][x] === TILE.EMPTY){ player.level = targetLevel; player.x = x; player.y = y; found=true; break outer; }
+          }
+        }
+      }
+      logMessage(player.level === 0 ? 'Has subido a la superficie.' : 'Has bajado al subterráneo.');
+      render();
+    }
+
+    /* -------------------------
+       Combate: flujo por turnos
+       ------------------------- */
+
+    function startCombat(enemy){
+      if(inCombat) return;
+      inCombat = true;
+      combatEnemy = enemy;
+      // Mostrar overlay, llenar datos
+      combatOverlay.style.display = 'block';
+      combatOverlay.setAttribute('aria-hidden','false');
+      combatLogEl.innerHTML = '';
+      appendCombatLog(`¡Te encuentras con ${enemy.name}!`);
+      updateCombatUI();
+      // Focar en overlay para accesibilidad
+      attackBtn.focus();
+    }
+
+    // Cerrar combate (victoria o huida)
+    function endCombat(){
+      inCombat = false;
+      combatEnemy = null;
+      combatOverlay.style.display = 'none';
+      combatOverlay.setAttribute('aria-hidden','true');
+      render();
+    }
+
+    // Actualiza la UI del panel de combate (HP y stats)
+    function updateCombatUI(){
+      c_player_hp.textContent = `HP: ${player.hp} / ${player.maxHp}`;
+      c_player_stats.textContent = `Atq: ${player.attack}  Def: ${player.defense}`;
+      if(combatEnemy){
+        c_enemy_name.textContent = combatEnemy.name;
+        c_enemy_hp.textContent = `HP: ${combatEnemy.hp} / ${combatEnemy.maxHp}`;
+        c_enemy_stats.textContent = `Atq: ${combatEnemy.attack}  Def: ${combatEnemy.defense}`;
+      } else {
+        c_enemy_name.textContent = '—';
+        c_enemy_hp.textContent = 'HP: —';
+        c_enemy_stats.textContent = 'Atq: — Def: —';
+      }
+    }
+
+    // Añade línea al log de combate
+    function appendCombatLog(text){
+      const p = document.createElement('div');
+      const t = new Date().toLocaleTimeString();
+      p.innerHTML = `<small style="color:#9fb8d8">[${t}]</small> ${text}`;
+      combatLogEl.appendChild(p);
+      combatLogEl.scrollTop = combatLogEl.scrollHeight;
+    }
+
+    // Manejo de tecla durante combate
+    function handleCombatKey(ev){
+      const k = ev.key.toLowerCase();
+      if(k === 'a'){ ev.preventDefault(); playerAttack(); }
+      else if(k === 'i'){ ev.preventDefault(); openCombatItemMenu(); }
+      else if(k === 'h'){ ev.preventDefault(); attemptFlee(); }
+    }
+
+    // Botones del overlay
+    attackBtn.addEventListener('click', playerAttack);
+    itemBtn.addEventListener('click', openCombatItemMenu);
+    fleeBtn.addEventListener('click', attemptFlee);
+
+    // Acción: jugador ataca
+    function playerAttack(){
+      if(!inCombat || !combatEnemy) return;
+      const dmg = calcDamage(player.attack, combatEnemy.defense);
+      combatEnemy.hp -= dmg;
+      appendCombatLog(`Atacas a ${combatEnemy.name} y haces ${dmg} dmg.`);
+      updateCombatUI();
+
+      if(combatEnemy.hp <= 0){
+        // Victoria
+        appendCombatLog(`Has derrotado a ${combatEnemy.name}.`);
+        handleEnemyDefeated(combatEnemy);
+        endCombat();
+        return;
+      }
+
+      // Enemigo responde
+      setTimeout(() => {
+        enemyTurn();
+      }, 400);
+    }
+
+    // Cálculo de daño: ataque - (defensa / 2), mínimo 1
+    function calcDamage(atk, def){
+      const raw = atk - (def / 2);
+      const d = Math.max(1, Math.round(raw));
+      return d;
+    }
+
+    // Turno del enemigo: ataca al jugador
+    function enemyTurn(){
+      if(!inCombat || !combatEnemy) return;
+      const dmg = calcDamage(combatEnemy.attack, player.defense);
+      player.hp -= dmg;
+      appendCombatLog(`${combatEnemy.name} te ataca y hace ${dmg} dmg.`);
+      updateCombatUI();
+      updateSidebarStats();
+      if(player.hp <= 0){
+        // Jugador muerto -> game over
+        player.hp = 0;
+        updateCombatUI();
+        setTimeout(()=> {
+          handlePlayerDefeat();
+        }, 400);
+      }
+    }
+
+    // Usar item desde el menú de combate (por ahora solo poción)
+    function openCombatItemMenu(){
+      if(!inCombat) return;
+      // Si hay poción, usar la primera; para simplicidad mostraremos opciones en prompt (simple)
+      const pot = getInventoryEntry('potion');
+      if(!pot || pot.qty <= 0){
+        appendCombatLog('No tienes pociones.');
+        return;
+      }
+      // Usar poción
+      const res = ITEM_DEFS.potion.use(player);
+      if(res.ok){
+        removeItem('potion', 1);
+        appendCombatLog(`Usaste una poción: ${res.msg}`);
+        updateCombatUI();
+        updateSidebarStats();
+        // Enemigo contrarremata
+        setTimeout(()=> enemyTurn(), 300);
+      } else {
+        appendCombatLog(res.msg);
+      }
+    }
+
+    // Intento de huida (50% éxito)
+    function attemptFlee(){
+      if(!inCombat) return;
+      const chance = Math.random();
+      if(chance < 0.5){
+        appendCombatLog('Huiste con éxito.');
+        endCombat();
+      } else {
+        appendCombatLog('Huir falló. El enemigo golpea de forma rápida.');
+        // enemigo golpea inmediatamente
+        setTimeout(()=> enemyTurn(), 250);
+      }
+    }
+
+    // Si el enemigo muere: recompensa y experiencia
+    function handleEnemyDefeated(enemy){
+      // Recompensas
+      const gainedExp = enemy.exp;
+      const gainedGold = enemy.gold;
+      player.exp += gainedExp;
+      addItem('gold', gainedGold);
+      logMessage(`Derrotaste a ${enemy.name}. Ganaste ${gainedExp} EXP y ${gainedGold} oro.`);
+      removeEnemy(enemy);
+      checkLevelUp();
+      render();
+    }
+
+    // Si el jugador muere -> game over
+    function handlePlayerDefeat(){
+      inCombat = false;
+      combatEnemy = null;
+      combatOverlay.style.display = 'none';
+      gameOverOverlay.style.display = 'block';
+      gameOverMsg.textContent = 'Has sido derrotado. Reinicia para intentarlo de nuevo.';
+    }
+
+    /* -------------------------
+       Experiencia y nivel
+       ------------------------- */
+    function expToNextLevel(lvl){
+      return lvl * 20; // simple: 20 * lvl
+    }
+
+    function checkLevelUp(){
+      const needed = expToNextLevel(player.lvl);
+      if(player.exp >= needed){
+        player.exp -= needed;
+        player.lvl += 1;
+        player.maxHp += 10;
+        player.baseAttack += 2;
+        // recalcular attack (incluye equip)
+        player.attack = player.baseAttack;
+        player.hp = player.maxHp; // restaurar HP al subir
+        logMessage(`¡Subiste al nivel ${player.lvl}! HP y ataque aumentados.`);
+        // comprobar encadenamiento (varios niveles)
+        if(player.exp >= expToNextLevel(player.lvl)) checkLevelUp();
+      }
+    }
+
+    /* -------------------------
+       Helpers: mensajes, rand, buscar enemigo
+       ------------------------- */
+    function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+    function logMessage(text){
+      const p = document.createElement('p');
+      const time = new Date().toLocaleTimeString();
+      p.innerHTML = `<small style="color:#9fb8d8">[${time}]</small> ${text}`;
+      messageLog.appendChild(p);
+      messageLog.scrollTop = messageLog.scrollHeight;
+    }
+
+    /* -------------------------
+       Enemigo spawn helpers / utils
+       ------------------------- */
+    // spawnEnemyAt defined earlier in generation functions (kept here for hoisting clarity)
+    // findEnemyAt and removeEnemy implemented earlier
+
+    /* -------------------------
+       Sidebar updates y botones
+       ------------------------- */
+    function updateSidebarStats(){
+      document.getElementById('playerHP').textContent = `${player.hp} / ${player.maxHp}`;
+      document.getElementById('playerLevel').textContent = player.lvl;
+      document.getElementById('playerExp').textContent = player.exp;
+      document.getElementById('playerAtk').textContent = player.attack;
+      document.getElementById('playerDef').textContent = player.defense;
+      document.getElementById('playerName').textContent = 'Hero';
+      currentLevelLabel.textContent = player.level === 0 ? 'Superficie (0)' : 'Subterráneo (1)';
+      usePotionBtn.disabled = !(getInventoryEntry('potion') && getInventoryEntry('potion').qty > 0);
+    }
+
+    usePotionBtn.addEventListener('click', ()=> {
+      useItem('potion');
+    });
+    centerBtn.addEventListener('click', ()=> {
+      render();
+      canvas.focus();
+      logMessage('Centrado en jugador.');
+    });
+
+    /* -------------------------
+       Start helper functions that were referenced earlier:
+       - spawnEnemyAt, findEnemyAt, placePlayerSafe
+       ------------------------- */
+
+    // spawnEnemyAt duplicate (ensures function exists if hoisting ordering changes)
+    function spawnEnemyAt(x,y,levelIndex, baseName='Enemigo'){
+      const difficulty = (levelIndex === 0) ? 1 : 2;
+      const maxHp = 8 + difficulty * randInt(2,6);
+      const atk = 3 + difficulty * randInt(1,3);
+      const def = 1 + difficulty * randInt(0,2);
+      const exp = 6 + difficulty * randInt(2,6);
+      const gold = randInt(3, 8) * difficulty;
+      const name = baseName + (difficulty===2 ? ' subterráneo' : '');
+      const enemy = {
+        id: `e_${Date.now()}_${x}_${y}_${Math.random().toString(36).substr(2,4)}`,
+        x,y,
+        level: levelIndex,
+        name,
+        maxHp,
+        hp: maxHp,
+        attack: atk,
+        defense: def,
+        exp,
+        gold
+      };
+      enemies.push(enemy);
+      return enemy;
+    }
+
+    function findEnemyAt(levelIndex,x,y){
+      return enemies.find(e => e.level === levelIndex && e.x === x && e.y === y);
+    }
+
+    function placePlayerSafe(){
+      for(let r=0;r<ROWS;r++){
+        for(let c=0;c<COLS;c++){
+          if(maps[player.level][r][c] === TILE.EMPTY){
+            player.x = c; player.y = r; return;
+          }
+        }
+      }
+      player.x = 0; player.y = 0;
+    }
+
+    /* -------------------------
+       Interacción tras derrota de enemigo: (ya en handleEnemyDefeated)
+       ------------------------- */
+
+    /* -------------------------
+       Exponer funciones para debugging / futuras partes
+       ------------------------- */
+    window.RPG = {
+      maps, enemies, player, TILE, addItem, useItem, render, logMessage, startCombat
+    };
+
+    // Final render inicial
+    render();
+
+    // Mensaje de ayuda
+    logMessage('Parte 5 lista: combate por turnos implementado. Usa flechas para moverte y entra en un enemigo para combatir.');
+  </script>
+</body>
+</html>
