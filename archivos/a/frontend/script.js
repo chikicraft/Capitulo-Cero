@@ -1,8 +1,10 @@
 // Configura la URL pública del backend (Render.com)
 // Ejemplo: const BACKEND_URL = 'https://tu-backend.onrender.com';
-const BACKEND_URL = 'http://localhost:3000'; // Cambia en producción
-
+const BACKEND_URL = 'https://capitulo-cero-backend.onrender.com';
 let socket;
+
+socket = io(BACKEND_URL);
+
 let username = null;
 let activeChat = { type: 'general', with: null }; // {type: 'general'|'private', with: 'username'}
 
