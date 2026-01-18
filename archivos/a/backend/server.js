@@ -5,7 +5,10 @@ import { Server } from 'socket.io';
 import registerSocketHandlers from './socket.js';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "https://chikicraft.github.io"
+}));
+
 
 // Salud de servidor
 app.get('/', (_req, res) => {
@@ -17,7 +20,7 @@ const server = http.createServer(app);
 // Configurar Socket.IO con CORS abierto (ajusta dominios en producción)
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: 'https://chikicraft.github.io',
     methods: ['GET', 'POST']
   }
 });
