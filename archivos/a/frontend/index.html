@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chat colaborativo</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- Modal de registro simple -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <h2>Ingresa tu nombre</h2>
+      <input id="usernameInput" type="text" placeholder="Tu nombre" maxlength="24" />
+      <button id="joinBtn">Entrar</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <!-- Barra lateral izquierda -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h3>Usuarios</h3>
+      </div>
+      <div class="chat-selector">
+        <button id="generalBtn" class="chat-tab active">Chat general</button>
+      </div>
+      <ul id="usersList" class="users"></ul>
+    </aside>
+
+    <!-- Contenedor principal -->
+    <main class="main">
+      <!-- Barra superior (sticky) -->
+      <header class="topbar">
+        <h2 id="chatTitle">Chat general</h2>
+      </header>
+
+      <!-- Área central de chat -->
+      <section id="messages" class="messages"></section>
+
+      <!-- Barra inferior -->
+      <footer class="bottombar">
+        <input id="messageInput" type="text" placeholder="Escribe un mensaje..." />
+        <button id="sendBtn">Enviar</button>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Socket.IO client -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
