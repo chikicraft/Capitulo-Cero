@@ -43,13 +43,23 @@ function joinChat() {
         alert(res?.error || 'No se pudo entrar');
         return;
       }
+
       connectedUsers = res.users || [];
       renderUsers();
+
+      // 🔹 MOSTRAR MENSAJES GUARDADOS
+      if (Array.isArray(res.messages)) {
+        res.messages.forEach(msg => {
+          renderMessage(msg);
+        });
+      }
+
       loginModal.style.display = 'none';
       setActiveChat('general');
       systemMessage(`Te has conectado como ${username}`);
     });
   });
+
 
   // Eventos del servidor
   socket.on('user-connected', ({ username: u, users }) => {

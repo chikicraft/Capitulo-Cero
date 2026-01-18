@@ -4,6 +4,7 @@
 const usersBySocket = new Map();      // socket.id -> { username }
 const socketsByUser = new Map();      // username -> socket.id
 const connectedUsers = new Set();     // usernames conectados
+const messages = [];
 
 export default function registerSocketHandlers(io) {
   io.on('connection', (socket) => {
@@ -29,24 +30,24 @@ export default function registerSocketHandlers(io) {
       io.emit('user-connected', { username, users: Array.from(connectedUsers) });
 
       // Confirmar al cliente
-      ack?.({ ok: true, users: Array.from(connectedUsers) });
+      ack?.({
+        ok: true,
+        users: Array.from(connectedUsers),
+        messages
+      });
     });
 
     // message: chat general
     socket.on('message', (payload) => {
-      const user = usersBySocket.get(socket.id);
-      if (!user) return;
-
-      const msg = sanitizeMessage(payload?.text);
-      if (!msg) return;
-
-      const timestamp = new Date().toISOString();
-      io.emit('message', {
+      const messageData = {
         from: user.username,
         text: msg,
         at: timestamp,
         scope: 'general'
-      });
+      };
+
+      messages.push(messageData);
+      io.emit('message', messageData);
     });
 
     // private-message: chat privado
