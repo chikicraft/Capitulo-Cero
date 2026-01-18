@@ -4,14 +4,18 @@
 const usersBySocket = new Map();      // socket.id -> { username }
 const socketsByUser = new Map();      // username -> socket.id
 const connectedUsers = new Set();     // usernames conectados
-const messages = [];
+const messages = []; // historial del chat general
 
 export default function registerSocketHandlers(io) {
   io.on('connection', (socket) => {
     // join: registro simple de usuario
     socket.on('join', (username, ack) => {
       if (!username || typeof username !== 'string') {
-        ack?.({ ok: false, error: 'Nombre de usuario inválido' });
+        ack?.({
+            ok: true,
+            users: Array.from(connectedUsers),
+            messages // 🔹 historial completo
+          });
         return;
       }
 
@@ -39,15 +43,27 @@ export default function registerSocketHandlers(io) {
 
     // message: chat general
     socket.on('message', (payload) => {
-      const messageData = {
+      const user = usersBySocket.get(socket.id);
+      if (!user) return;
+
+      const msgText = sanitizeMessage(payload?.text);
+      if (!msgText) return;
+
+      const message = {
         from: user.username,
-        text: msg,
-        at: timestamp,
+        text: msgText,
+        at: new Date().toISOString(),
         scope: 'general'
       };
 
-      messages.push(messageData);
-      io.emit('message', messageData);
+      // 🔹 GUARDAR MENSAJE EN EL HISTORIAL
+      messages.push(message);
+
+      // (opcional) limitar historial
+      if (messages.length > 100) messages.shift();
+
+      // 🔹 ENVIAR A TODOS
+      io.emit('message', message);
     });
 
     // private-message: chat privado

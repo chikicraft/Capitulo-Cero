@@ -47,10 +47,10 @@ function joinChat() {
       connectedUsers = res.users || [];
       renderUsers();
 
-      // 🔹 MOSTRAR MENSAJES GUARDADOS
+      // 🔹 CARGAR HISTORIAL DEL CHAT GENERAL
       if (Array.isArray(res.messages)) {
         res.messages.forEach(msg => {
-          renderMessage(msg);
+          addMessage(msg);
         });
       }
 
