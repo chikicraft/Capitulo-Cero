@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Dama de Treboles ♠️</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Cormorant+Garamond:wght@300;400&family=Allura&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    background: #ffffff;
+    color: #111;
+}
+
+.pagina {
+    max-width: 1000px;
+    margin: 100px auto;
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+}
+
+.titulo {
+    font-family: 'Allura', cursive;
+    font-size: 60px;
+    font-weight: normal;
+    text-align: right;
+    margin-bottom: 60px;
+}
+
+.poema {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    line-height: 1.9;
+    white-space: pre-line;
+    max-width: 420px;
+}
+
+.firma {
+    margin-top: 80px;
+    text-align: right;
+}
+
+.firma img {
+    width: 180px;
+    opacity: 0.85;
+}
+
+.imagen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.imagen img {
+    max-width: 100%;
+    height: auto;
+}
+
+@media (max-width: 900px) {
+    .pagina {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .titulo {
+        text-align: left;
+        font-size: 48px;
+    }
+
+    .firma {
+        text-align: left;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="pagina">
+
+    <div>
+        <div class="titulo">Dama de Treboles</div>
+
+        <div class="poema">
+Seguí hablando contigo
+como quien vuelve a la mesa
+después de una mala racha.
+
+Con cuidado.
+Como si las manos recordaran
+lo que el orgullo intenta olvidar.
+
+No sabía qué eras.
+No eras amor —
+el amor tiene forma,
+tiene promesas que pesan—
+y lo nuestro era más difuso.
+
+Era esperar tu mensaje
+sin admitir que lo esperaba.
+Era aprender tu risa
+como quien memoriza una jugada.
+Era fingir que no estaba apostando
+mientras todo en mí
+ya estaba sobre la mesa.
+
+Cada coincidencia sumaba.
+Cada silencio compartido
+valía más de lo que debía.
+Cada mirada sostenida
+era un as ambiguo
+que podía salvarme
+o dejarme al borde.
+
+Veintiuno es el límite.
+Después de eso,
+todo se rompe.
+
+Yo contaba en silencio,
+intentando no excederme,
+intentando no quedarme corto.
+
+Hasta que una tarde
+mencionaste planes de domingo
+que no me incluían.
+Un “nosotros” dicho con naturalidad.
+Un nombre repetido
+con esa suavidad
+que no se improvisa.
+
+Y entendí.
+
+No fue un disparo.
+Fue algo más fino.
+Como ver la carta del crupier
+cuando ya es demasiado tarde
+para retirar la apuesta.
+
+No sentí celos.
+Sentí desajuste.
+
+Yo jugaba a descubrirte.
+Tú ya pertenecías a otra partida.
+
+Entonces todo encajó:
+la distancia medida,
+la puerta entreabierta,
+la forma exacta en que nunca cruzabas
+cierta línea invisible.
+
+No eras prohibida.
+Eras límite.
+
+Y el límite no grita.
+Solo existe.
+
+No sé qué es esto ahora.
+No es amor —
+porque el amor necesita espacio propio—
+y yo no tengo ninguno.
+
+Pero tampoco es nada.
+
+Es una mano fuerte
+que no puedo mejorar.
+Es quedarme quieto
+porque pedir otra carta
+sería perderme.
+
+Así que sonrío
+como si entendiera las reglas
+desde el inicio.
+
+A veces no se pierde por mala suerte.
+Se pierde porque uno se sienta
+cuando la mesa
+ya estaba repartida.
+
+Y lo más cruel
+no es haber perdido.
+
+Es haber sentido,
+por un segundo exacto,
+que el as
+respondía a mi nombre.
+        </div>
+
+        <div class="firma">
+            <img src="Firma=Poeta_Binario.png" alt="Firma Poeta Binario">
+        </div>
+    </div>
+
+    <div class="imagen">
+        <img src="Dama_de_treboles.png" alt="Ilustración del poema">
+    </div>
+
+</div>
+
+</body>
+</html>

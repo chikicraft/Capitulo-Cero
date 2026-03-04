@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Poemas</title>
+  <style>
+    * {
+    box-sizing: border-box;
+    font-family: Georgia, serif;
+    }
+
+    body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.8s ease, color 0.8s ease;
+    }
+
+    .contenedor {
+    max-width: 600px;
+    padding: 40px;
+    border-radius: 14px;
+    text-align: center;
+    backdrop-filter: blur(6px);
+    }
+
+    .poema p {
+    font-size: 1.3rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    white-space: pre-line;
+    }
+
+    .poema span {
+    font-style: italic;
+    }
+
+    body.flores {
+    background: linear-gradient(135deg, #ffecd2, #fcb69f);
+    color: #5a2a27;
+    }
+
+    body.flores .contenedor {
+    background: rgba(255, 255, 255, 0.6);
+    }
+
+    body.luna {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #e0e8f0;
+    }
+
+    body.luna .contenedor {
+    background: rgba(0, 0, 0, 0.45);
+    }
+
+    body.amor {
+    background: linear-gradient(135deg, #ff758c, #ff7eb3);
+    color: #4a0f1c;
+    }
+
+    body.amor .contenedor {
+    background: rgba(255, 255, 255, 0.55);
+    }
+  </style>
+</head>
+<body>
+
+  <main class="contenedor">
+    <h1 id="titulo">Poemas</h1>
+
+    <article class="poema">
+      <p id="texto-poema"></p>
+      <span id="autor-poema"></span>
+    </article>
+  </main>
+
+  <script>
+    const poemas = [
+    {
+        texto: `Florece lento el día
+    cuando pienso en tu nombre,
+    como un jardín que despierta.`,
+        autor: "Tu nombre",
+        tema: "flores"
+    },
+    {
+        texto: `La luna me habla en silencio,
+    dice lo que callas
+    cuando la noche cae.`,
+        autor: "Tu nombre",
+        tema: "luna"
+    },
+    {
+        texto: `Te quise sin ruido,
+    como amanecen las cosas
+    que duran.`,
+        autor: "Tu nombre",
+        tema: "amor"
+    }
+    ];
+
+    function mostrarPoemaAleatorio() {
+    const indice = Math.floor(Math.random() * poemas.length);
+    const poema = poemas[indice];
+
+    // Texto
+    document.getElementById("texto-poema").textContent = poema.texto;
+    document.getElementById("autor-poema").textContent = `— ${poema.autor}`;
+
+    // Limpiar clases anteriores
+    document.body.className = "";
+
+    // Aplicar tema
+    document.body.classList.add(poema.tema);
+    }
+
+    document.addEventListener("DOMContentLoaded", mostrarPoemaAleatorio);
+  </script>
+</body>
+</html>

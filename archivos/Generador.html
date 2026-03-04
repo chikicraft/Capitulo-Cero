@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Poemas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            font-family: 'Georgia', serif;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: linear-gradient(135deg, #ccc 0%, #999 100%);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .poem-display {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            min-height: 600px;
+            display: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .poem-display.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        .poem-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+            z-index: 0;
+        }
+
+        .poem-content-wrapper {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 5px solid #8b7355;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .poem-title {
+            font-size: 2.5em;
+            color: #4a4a4a;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: bold;
+            text-transform: capitalize;
+            letter-spacing: 2px;
+        }
+
+        .poem-text {
+            font-size: 1.3em;
+            line-height: 2;
+            color: #333;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+
+        .poem-text p {
+            margin-bottom: 1.5em;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .error {
+            background: #fee;
+            border-left-color: #e74c3c;
+            color: #c0392b;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .copy-btn, .save-btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        .copy-btn {
+            background: #27ae60;
+        }
+
+        .copy-btn:hover {
+            background: #2ecc71;
+        }
+
+        .save-btn {
+            background: #e67e22;
+        }
+
+        .save-btn:hover {
+            background: #f39c12;
+        }
+
+        .favorites-section {
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        .favorite-item {
+            background: #f9f9f9;
+            border-left: 5px solid #e67e22;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            animation: slideIn 0.3s;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .favorite-item:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .favorite-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .favorite-meta {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .favorite-content {
+            font-size: 0.95em;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            margin-bottom: 10px;
+            color: #333;
+            max-height: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+            padding: 5px 15px;
+            font-size: 12px;
+            flex: none;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .background-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bg-option {
+            width: 100%;
+            height: 60px;
+            border: 3px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            background-size: cover;
+            background-position: center;
+            transition: all 0.3s;
+        }
+
+        .bg-option:hover {
+            transform: scale(1.05);
+            border-color: #667eea;
+        }
+
+        .bg-option.active {
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="container">
+            <h1>✨ Generador de Poemas ✨</h1>
+            
+            <div class="input-section">
+                <label for="tema">Tema del poema:</label>
+                <input type="text" id="tema" placeholder="Ej: amor, naturaleza, luna...">
+            </div>
+
+            <div class="input-section">
+                <label for="estilo">Estilo:</label>
+                <select id="estilo">
+                    <option value="romantico">Romántico</option>
+                    <option value="moderno">Moderno/Contemporáneo</option>
+                    <option value="clasico">Clásico</option>
+                    <option value="libre">Verso Libre</option>
+                    <option value="haiku">Haiku (Japonés)</option>
+                    <option value="soneto">Soneto (14 versos)</option>
+                    <option value="epico">Épico/Narrativo</option>
+                    <option value="lirico">Lírico</option>
+                    <option value="surrealista">Surrealista</option>
+                    <option value="minimalista">Minimalista</option>
+                    <option value="prosa">Poema en Prosa</option>
+                    <option value="concreto">Poesía Concreta/Visual</option>
+                    <option value="pastoral">Pastoral</option>
+                    <option value="gotico">Gótico/Oscuro</option>
+                    <option value="mistico">Místico/Espiritual</option>
+                    <option value="social">Social/Protesta</option>
+                </select>
+            </div>
+
+            <div class="input-section">
+                <label>Fondo del poema:</label>
+                <div class="background-selector">
+                    <div class="bg-option active" data-bg="night" style="background: linear-gradient(135deg, #0a1128 0%, #1e3a5f 100%);"></div>
+                    <div class="bg-option" data-bg="sunset" style="background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);"></div>
+                    <div class="bg-option" data-bg="nature" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);"></div>
+                    <div class="bg-option" data-bg="rose" style="background: linear-gradient(135deg, #c94b4b 0%, #4b134f 100%);"></div>
+                    <div class="bg-option" data-bg="ocean" style="background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);"></div>
+                    <div class="bg-option" data-bg="forest" style="background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);"></div>
+                    <div class="bg-option" data-bg="lavender" style="background: linear-gradient(135deg, #9b59b6 0%, #e74c3c 100%);"></div>
+                    <div class="bg-option" data-bg="gold" style="background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);"></div>
+                </div>
+            </div>
+
+            <div class="button-container">
+                <button id="generarBtn">Generar Poema</button>
+            </div>
+
+            <h2 style="margin-top: 30px;">💖 Favoritos</h2>
+            <div class="favorites-section">
+                <div id="favoritesList"></div>
+            </div>
+        </div>
+
+        <div id="poemDisplay" class="poem-display">
+            <div class="poem-background" id="poemBackground"></div>
+            <div class="poem-content-wrapper">
+                <h2 class="poem-title" id="poemTitle"></h2>
+                <div class="poem-text" id="poemText"></div>
+                <div class="action-buttons">
+                    <button id="copyBtn" class="copy-btn">📋 Copiar</button>
+                    <button id="saveBtn" class="save-btn">⭐ Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const temaInput = document.getElementById('tema');
+        const estiloSelect = document.getElementById('estilo');
+        const generarBtn = document.getElementById('generarBtn');
+        const poemDisplay = document.getElementById('poemDisplay');
+        const poemTitle = document.getElementById('poemTitle');
+        const poemText = document.getElementById('poemText');
+        const poemBackground = document.getElementById('poemBackground');
+        const copyBtn = document.getElementById('copyBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const favoritesList = document.getElementById('favoritesList');
+
+        let poemaActual = null;
+        let backgroundActual = 'night';
+
+        const backgrounds = {
+            night: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200',
+            sunset: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200',
+            nature: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200',
+            rose: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1200',
+            ocean: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1200',
+            forest: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1200',
+            lavender: 'https://images.unsplash.com/photo-1499002238440-d264edd596ec?w=1200',
+            gold: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200'
+        };
+
+        // Selector de fondo
+        document.querySelectorAll('.bg-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.bg-option').forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+                backgroundActual = this.dataset.bg;
+            });
+        });
+
+        cargarFavoritos();
+
+        generarBtn.addEventListener('click', generarPoema);
+        copyBtn.addEventListener('click', copiarPoema);
+        saveBtn.addEventListener('click', guardarPoema);
+
+        async function generarPoema() {
+            const tema = temaInput.value.trim();
+            
+            if (!tema) {
+                alert('Por favor, ingresa un tema para el poema');
+                return;
+            }
+
+            const estilo = estiloSelect.value;
+            const estiloTexto = estiloSelect.options[estiloSelect.selectedIndex].text;
+            
+            generarBtn.disabled = true;
+            poemDisplay.classList.add('show');
+            poemTitle.textContent = 'Generando...';
+            poemText.textContent = 'Tu poema está siendo creado...';
+            poemBackground.style.backgroundImage = `url(${backgrounds[backgroundActual]})`;
+
+            const instrucciones = {
+                haiku: 'Debe tener 3 versos con estructura 5-7-5 sílabas.',
+                soneto: 'Debe tener 14 versos divididos en 2 cuartetos y 2 tercetos con rima consonante.',
+                epico: 'Debe narrar una historia heroica o grandiosa con tono elevado.',
+                lirico: 'Debe expresar sentimientos y emociones profundas del yo poético.',
+                surrealista: 'Debe usar imágenes oníricas, metáforas inesperadas y asociaciones libres.',
+                minimalista: 'Debe ser breve, preciso, con economía de palabras pero gran impacto.',
+                prosa: 'Debe estar escrito en prosa pero con lenguaje poético y ritmo lírico.',
+                concreto: 'Debe jugar con la disposición visual del texto y la forma.',
+                pastoral: 'Debe evocar la naturaleza, la vida rural y la tranquilidad bucólica.',
+                gotico: 'Debe tener atmósfera oscura, misteriosa y melancólica.',
+                mistico: 'Debe explorar temas trascendentes y espirituales con lenguaje elevado.',
+                social: 'Debe abordar temas de justicia social, crítica o cambio.'
+            };
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 1000,
+                        messages: [{
+                            role: 'user',
+                            content: `Escribe un poema en español sobre "${tema}" en estilo ${estiloTexto}. 
+                            ${instrucciones[estilo] || ''}
+                            El poema debe ser original, emotivo y de alta calidad literaria.
+                            Si el tema incluye referencias al cuerpo humano, la sensualidad o la intimidad, abórdalo con lenguaje poético, elegante y artístico, sin censura pero con buen gusto literario.
+                            IMPORTANTE: Proporciona un título creativo para el poema en la primera línea, seguido de una línea en blanco y luego el poema.
+                            Formato:
+                            [Título del poema]
+                            
+                            [Contenido del poema]`
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const respuesta = data.content[0].text;
+                
+                // Separar título y contenido
+                const lineas = respuesta.split('\n');
+                const titulo = lineas[0].trim();
+                const contenido = lineas.slice(2).join('\n').trim();
+                
+                poemaActual = {
+                    tema: tema,
+                    estilo: estiloTexto,
+                    titulo: titulo,
+                    contenido: contenido,
+                    background: backgroundActual,
+                    fecha: new Date().toLocaleString('es-ES')
+                };
+                
+                poemTitle.textContent = titulo;
+                poemText.textContent = contenido;
+            } catch (error) {
+                poemTitle.textContent = 'Error';
+                poemText.textContent = 'No se pudo generar el poema. Intenta nuevamente.';
+                console.error('Error:', error);
+            } finally {
+                generarBtn.disabled = false;
+            }
+        }
+
+        function copiarPoema() {
+            const texto = `${poemTitle.textContent}\n\n${poemText.textContent}`;
+            navigator.clipboard.writeText(texto).then(() => {
+                const textoOriginal = copyBtn.textContent;
+                copyBtn.textContent = '✓ Copiado!';
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copiar';
+                }, 2000);
+            });
+        }
+
+        function guardarPoema() {
+            if (!poemaActual) return;
+
+            const favoritos = obtenerFavoritos();
+            const nuevoPoema = {
+                ...poemaActual,
+                id: Date.now()
+            };
+            
+            favoritos.unshift(nuevoPoema);
+            localStorage.setItem('poemasFavoritos', JSON.stringify(favoritos));
+            
+            cargarFavoritos();
+            
+            const textoOriginal = saveBtn.textContent;
+            saveBtn.textContent = '✓ Guardado!';
+            setTimeout(() => {
+                saveBtn.textContent = '⭐ Guardar';
+            }, 2000);
+        }
+
+        function obtenerFavoritos() {
+            const favoritos = localStorage.getItem('poemasFavoritos');
+            return favoritos ? JSON.parse(favoritos) : [];
+        }
+
+        function cargarFavoritos() {
+            const favoritos = obtenerFavoritos();
+            
+            if (favoritos.length === 0) {
+                favoritesList.innerHTML = '<div class="empty-state">No tienes poemas guardados</div>';
+                return;
+            }
+
+            favoritesList.innerHTML = favoritos.map(poema => `
+                <div class="favorite-item" onclick="mostrarPoema(${poema.id})">
+                    <div class="favorite-header">
+                        <div class="favorite-meta">
+                            <strong>${poema.titulo || poema.tema}</strong><br>
+                            <small>${poema.estilo} • ${poema.fecha}</small>
+                        </div>
+                        <button class="delete-btn" onclick="event.stopPropagation(); eliminarPoema(${poema.id})">🗑️</button>
+                    </div>
+                    <div class="favorite-content">${poema.contenido.substring(0, 100)}...</div>
+                </div>
+            `).join('');
+        }
+
+        function mostrarPoema(id) {
+            const favoritos = obtenerFavoritos();
+            const poema = favoritos.find(p => p.id === id);
+            
+            if (poema) {
+                poemaActual = poema;
+                poemDisplay.classList.add('show');
+                poemTitle.textContent = poema.titulo || poema.tema;
+                poemText.textContent = poema.contenido;
+                poemBackground.style.backgroundImage = `url(${backgrounds[poema.background || 'night']})`;
+            }
+        }
+
+        function eliminarPoema(id) {
+            const favoritos = obtenerFavoritos();
+            const nuevosFavoritos = favoritos.filter(p => p.id !== id);
+            localStorage.setItem('poemasFavoritos', JSON.stringify(nuevosFavoritos));
+            cargarFavoritos();
+        }
+
+        temaInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                generarPoema();
+            }
+        });
+    </script>
+</body>
+</html>
