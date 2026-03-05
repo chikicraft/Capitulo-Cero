@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>As de Corazones</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Allura&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+    margin:0;
+    background:#ffffff;
+    font-family:'Cormorant Garamond', serif;
+}
+
+.pagina{
+    width:900px;
+    margin:auto;
+    position:relative;
+    padding:60px;
+}
+
+.titulo{
+    position:absolute;
+    top:80px;
+    right:120px;
+    font-family:'Allura', cursive;
+    font-size:70px;
+}
+
+.poema{
+    position:absolute;
+    top:200px;
+    right:80px;
+    width:320px;
+    line-height:1.8;
+    font-size:20px;
+    text-align:center;
+    white-space:pre-line;
+}
+
+.cartas-arriba{
+    position:absolute;
+    top:80px;
+    left:120px;
+    width:250px;
+}
+
+.calavera{
+    position:absolute;
+    top:520px;
+    right:100px;
+    width:260px;
+}
+
+.mano{
+    position:absolute;
+    bottom:0;
+    left:120px;
+    width:320px;
+}
+
+.firma{
+    position:absolute;
+    top:20px;
+    left:60px;
+    width:150px;
+}
+
+img{
+    width:100%;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="pagina">
+
+<img class="firma" src="firma.png">
+
+<img class="cartas-arriba" src="cartas.png">
+
+<div class="titulo">As de Corazones</div>
+
+<div class="poema">
+
+No fue destino.
+Fue una carta mal barajada.
+
+Yo venía perdiendo
+contra mí mismo,
+con el pecho lleno de humo
+y la mirada apostada al vacío.
+
+Y entonces apareces.
+
+No como luz.
+La luz salva.
+Tú no salvaste nada.
+Solo cambiaste el pulso
+de la caída.
+
+Fue un segundo exacto.
+El instante donde el aire pesa distinto.
+Donde uno no sabe
+si acaba de ganar
+o si firmó su última derrota.
+ 
+Estaba en mi cuarta sombra,
+en esa ronda donde el corazón
+ya no apuesta fuerte.
+Y tú sin saberlo,
+me miraste como quien apunta
+sin intención de disparar
+pero deja la marca.
+
+No sé si fuiste suerte
+o advertencia.
+
+Hay encuentros
+que no traen primavera,
+traen preguntas.
+
+Te vi
+y algo en mí hizo terna:
+miedo, deseo,
+y esa forma peligrosa de esperanza
+que uno promete no volver a tocar.
+
+Yo no estaba listo.
+Estaba roto en silencio.
+Era carne cansada
+que apenas aprendía
+a no temblar.
+
+Pero tu presencia
+mínima, casi casual
+movió la mesa.
+
+Y ahora no sé
+si agradecerte
+o doblar la apuesta
+hasta quedarme sin nada.
+
+Porque hay personas
+que no llegan para quedarse,
+llegan para revelar
+cuánto queda de nosotros
+dispuesto a arder.
+
+No sé qué eres en mi historia.
+No sé si debo jugar esta carta
+o guardarla intacta
+entre las que nunca me atreví a lanzar.
+
+Solo sé
+que desde ese momento exacto
+mi caída ya no fue la misma.
+
+Y eso,
+no sé si es fortuna
+o la forma más elegante
+de la mala suerte.
+
+</div>
+
+<img class="calavera" src="calavera.png">
+
+<img class="mano" src="mano_cartas.png">
+
+</div>
+
+</body>
+</html>
